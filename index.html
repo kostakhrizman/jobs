@@ -1,0 +1,1056 @@
+<!doctype html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>המשרות שלי</title>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16181b" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f3f4f5; --surface: #ffffff; --ink: #1f2429; --muted: #5f656d; --faint: #8a9098; --line: #e1e3e6;
+    --accent: #0caa41; --accent-ink: #087f30; --accent-soft: #e7f6ec; --on-accent: #ffffff;
+    --maybe: #8a5a00; --maybe-soft: #fdf1d8; --new: #c2410c; --new-soft: #fde9dd;
+    --danger: #c0262d; --warn: #b45309; --chip: #f1f2f4; --hover: #f7f8f9; --sel: #f0faf3;
+    --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111315; --surface: #1b1e22; --ink: #e8eaed; --muted: #a2a8b0; --faint: #7d838b; --line: #2d3137;
+      --accent: #2fc566; --accent-ink: #5fd98a; --accent-soft: #15301f; --on-accent: #0b1a10;
+      --maybe: #f0c26b; --maybe-soft: #3a2e17; --new: #fb923c; --new-soft: #3a2417;
+      --danger: #f87171; --warn: #fbbf24; --chip: #262a2f; --hover: #22262b; --sel: #18291f;
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.5 "Rubik", "Segoe UI", system-ui, Arial, sans-serif; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  a { color: inherit; }
+  svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  /* ---- top bar ---- */
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; }
+  .topbar-in { max-width: 1240px; margin: 0 auto; padding: 10px 20px; display: flex; align-items: center; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 19px; white-space: nowrap; }
+  .brand img { width: 30px; height: 30px; border-radius: 8px; }
+  .searchbox { flex: 1; display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--line);
+               border-radius: 999px; padding: 0 14px; height: 42px; max-width: 640px; }
+  .searchbox:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .searchbox svg { color: var(--faint); }
+  .searchbox input { flex: 1; border: 0; background: transparent; color: var(--ink); font: inherit; outline: none; min-width: 0; }
+  .top-actions { display: flex; align-items: center; gap: 4px; margin-right: auto; }
+  .icon-btn { width: 40px; height: 40px; border-radius: 999px; border: 0; background: transparent; display: grid; place-items: center; color: var(--muted); }
+  .icon-btn:hover { background: var(--hover); color: var(--ink); }
+  .icon-btn.spin svg { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(-360deg); } }
+  .status { font-size: 12px; color: var(--faint); white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+  .sync-dot.ok { background: var(--accent); } .sync-dot.err { background: var(--danger); } .sync-dot.busy { background: var(--warn); }
+
+  /* ---- filters: one row of dropdown buttons ---- */
+  .filters { background: var(--surface); border-bottom: 1px solid var(--line); position: relative; z-index: 15; }
+  .filters-in { max-width: 1240px; margin: 0 auto; padding: 10px 20px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .dd { position: relative; }
+  .dd-btn { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 12px 0 10px; border-radius: 999px;
+            border: 1px solid var(--line); background: var(--surface); font-weight: 500; font-size: 14px; max-width: 240px; }
+  .dd-btn svg { width: 16px; height: 16px; color: var(--muted); }
+  .dd-btn .caret { transition: transform .15s; }
+  .dd-btn:hover { border-color: var(--faint); }
+  .dd-btn.set { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+  .dd-btn.set svg { color: var(--accent-ink); }
+  .dd-btn[aria-expanded="true"] .caret { transform: rotate(180deg); }
+  .dd-val { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dd-panel { display: none; position: absolute; top: calc(100% + 6px); right: 0; width: 330px; max-height: min(60vh, 460px);
+              overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+              box-shadow: 0 12px 32px rgba(16,24,40,.16); padding: 6px 14px 14px; z-index: 30; }
+  .dd-panel.wide { width: 380px; }
+  .dd-panel.open { display: block; }
+  .dd-head { display: flex; justify-content: space-between; align-items: center; font-weight: 600; padding: 8px 0;
+             position: sticky; top: -6px; background: var(--surface); z-index: 1; }
+  .dd-x { border: 0; background: none; color: var(--muted); width: 32px; height: 32px; border-radius: 50%; }
+  .dd-x:hover { background: var(--hover); }
+  .group { display: flex; gap: 6px; }
+  .group.wrap { flex-wrap: wrap; }
+  .group.list { flex-direction: column; gap: 2px; }
+  .group.list .pill { border: 0; border-radius: 8px; text-align: start; padding: 8px 10px; display: flex; align-items: center; }
+  .group.list .pill:hover { background: var(--hover); }
+  .group.list .pill.on { background: var(--accent-soft); }
+  .group.list .pill .n { margin-inline-start: auto; }
+  .switch { display: flex; align-items: center; gap: 10px; margin-top: 14px; border: 0; padding: 4px 0; cursor: pointer; white-space: normal; }
+  .switch.on { background: none; color: var(--ink); font-weight: 400; }
+  .knob { width: 36px; height: 20px; border-radius: 999px; background: var(--line); position: relative; flex-shrink: 0; transition: background .15s; }
+  .knob::after { content: ""; position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff;
+                 box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: right .15s; }
+  .switch.on .knob { background: var(--accent); }
+  .switch.on .knob::after { right: 18px; }
+  .clear-btn { border: 0; background: none; color: var(--accent-ink); font-weight: 500; font-size: 14px; padding: 6px 8px; flex-shrink: 0; }
+  .clear-btn:hover { text-decoration: underline; }
+  .dd-scrim { display: none; }
+  .pill { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 13px;
+          font-size: 13.5px; white-space: nowrap; color: var(--ink); }
+  .pill:hover { border-color: var(--faint); }
+  .pill.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); font-weight: 500; }
+  .pill input { display: none; }
+  .pill .mini { width: 20px; height: 20px; border-radius: 5px; font-size: 10px; display: inline-grid; place-items: center;
+                color: #fff; font-weight: 700; margin-inline-end: 6px; vertical-align: -5px; }
+  .emp-link { cursor: pointer; border: 0; background: none; padding: 0; font: inherit; color: inherit; text-align: inherit; }
+  .emp-link:hover { text-decoration: underline; }
+  button.logo { border: 0; padding: 0; cursor: pointer; }
+  .pill .n { color: var(--faint); font-size: 12px; margin-inline-start: 5px; }
+  .pill.on .n { color: var(--accent-ink); }
+
+  /* ---- page ---- */
+  .page { max-width: 1240px; margin: 0 auto; padding: 14px 20px 40px; }
+  .notice { background: var(--maybe-soft); color: var(--maybe); padding: 9px 14px; border-radius: 8px; margin-bottom: 10px; font-size: 14px; }
+  .listhead { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+  .tab { border: 0; background: none; padding: 8px 12px; border-bottom: 3px solid transparent; color: var(--muted);
+         font-weight: 500; white-space: nowrap; }
+  .tab.on { color: var(--ink); border-bottom-color: var(--accent); }
+  .count { background: var(--chip); border-radius: 999px; padding: 0 7px; font-size: 12px; margin-right: 4px; color: var(--muted); }
+  .count:empty, .pill .n:empty { display: none; }
+  .tab.on .count { background: var(--accent-soft); color: var(--accent-ink); }
+  .split { display: grid; grid-template-columns: minmax(330px, 420px) 1fr; gap: 16px; align-items: start; }
+
+  /* ---- job list ---- */
+  .joblist { display: flex; flex-direction: column; gap: 8px; }
+  .jc { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 14px 12px;
+        display: grid; grid-template-columns: 44px 1fr auto; gap: 4px 12px; cursor: pointer; position: relative;
+        box-shadow: var(--shadow); transition: border-color .12s, background .12s; }
+  .jc:hover { border-color: var(--faint); }
+  .jc.sel { border-color: var(--accent); background: var(--sel); box-shadow: inset -3px 0 0 var(--accent), var(--shadow); }
+  .logo { width: 44px; height: 44px; border-radius: 8px; display: grid; place-items: center; font-weight: 700; font-size: 15px;
+          color: #fff; letter-spacing: -.5px; grid-row: span 3; }
+  .jc .co { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .jc .t { font-size: 16px; font-weight: 600; line-height: 1.35; grid-column: 2 / 4; }
+  .jc .loc { font-size: 13px; color: var(--muted); grid-column: 2 / 4; display: flex; flex-wrap: wrap; gap: 2px 10px; }
+  .jc .tags { grid-column: 2 / 4; display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .save-ic { border: 0; background: none; color: var(--faint); padding: 2px; border-radius: 6px; line-height: 0; }
+  .save-ic:hover { color: var(--accent); }
+  .save-ic.on { color: var(--accent); }
+  .save-ic.on svg { fill: currentColor; }
+  .tag { font-size: 12px; padding: 1px 8px; border-radius: 4px; background: var(--chip); color: var(--muted); white-space: nowrap; }
+  .tag.high { background: var(--accent-soft); color: var(--accent-ink); font-weight: 500; }
+  .tag.maybe { background: var(--maybe-soft); color: var(--maybe); font-weight: 500; }
+  .tag.open { background: var(--chip); color: var(--ink); font-weight: 500; border: 1px solid var(--line); }
+  .tag.new { background: var(--new-soft); color: var(--new); font-weight: 500; }
+  .urgent { color: var(--danger); font-weight: 600; }
+  .soon { color: var(--warn); font-weight: 600; }
+  .from-note { font-size: 12.5px; color: var(--accent-ink); font-weight: 500; margin: 2px 2px 0; display: flex; justify-content: space-between; align-items: center; }
+  .from-note button { border: 0; background: none; color: var(--muted); font-size: 12.5px; text-decoration: underline; }
+  .empty { text-align: center; color: var(--muted); padding: 46px 20px; background: var(--surface);
+           border: 1px dashed var(--line); border-radius: var(--radius); }
+  .loading { text-align: center; color: var(--muted); padding: 60px; }
+
+  /* ---- detail ---- */
+  .detail { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+            position: sticky; top: 76px; max-height: calc(100vh - 92px); overflow: auto; }
+  .d-head { padding: 22px 24px 16px; border-bottom: 1px solid var(--line); }
+  .d-co { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .d-co .logo { grid-row: auto; width: 52px; height: 52px; font-size: 17px; }
+  .d-co .name { font-weight: 500; }
+  .d-co .unit { font-size: 13px; color: var(--muted); }
+  .d-title { font-size: 23px; font-weight: 700; line-height: 1.3; margin: 0 0 6px; }
+  .d-meta { color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .d-meta span { display: inline-flex; align-items: center; gap: 4px; }
+  .d-meta svg { width: 15px; height: 15px; }
+  .d-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; align-items: center; }
+  .btn { border-radius: 8px; padding: 9px 18px; font-weight: 600; border: 1px solid var(--line); background: var(--surface);
+         display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-size: 15px; white-space: nowrap; }
+  .btn:hover { border-color: var(--ink); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn.primary:hover { filter: brightness(.95); }
+  .btn.saved { color: var(--accent-ink); border-color: var(--accent); }
+  .btn.saved svg { fill: currentColor; }
+  .btn.ghost { border-color: transparent; color: var(--muted); font-weight: 500; }
+  .btn.ghost:hover { color: var(--ink); background: var(--hover); }
+  .d-body { padding: 6px 24px 26px; }
+  .d-sec { padding-top: 16px; }
+  .d-sec h3 { font-size: 16px; margin: 0 0 8px; }
+  .why { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .why li { display: flex; gap: 8px; align-items: flex-start; font-size: 14.5px; }
+  .why li::before { content: "✓"; color: var(--accent); font-weight: 700; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .fact { background: var(--bg); border-radius: 8px; padding: 9px 12px; }
+  .fact .k { font-size: 12px; color: var(--faint); }
+  .fact .v { font-weight: 500; font-size: 14.5px; }
+  .txt { white-space: pre-line; font-size: 14.5px; line-height: 1.7; overflow-wrap: anywhere; }
+  .d-empty { padding: 60px 24px; text-align: center; color: var(--muted); }
+  .back { display: none; }
+  .more { margin-top: 22px; font-size: 13px; color: var(--muted); line-height: 1.7; }
+  .more a { color: var(--accent-ink); }
+
+  /* ---- settings ---- */
+  dialog { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink);
+           width: min(520px, calc(100vw - 32px)); padding: 20px 22px; }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  dialog h2 { margin: 0 0 6px; font-size: 20px; }
+  dialog h3 { margin: 16px 0 6px; font-size: 15px; }
+  dialog p, dialog li { font-size: 14px; color: var(--muted); }
+  dialog ol { padding-right: 18px; margin: 6px 0; }
+  dialog input[type=text], dialog input[type=password] { width: 100%; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--bg); color: var(--ink); font: inherit; margin: 4px 0 8px; direction: ltr; text-align: left; }
+  dialog .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  dialog a { color: var(--accent-ink); }
+  dialog summary { cursor: pointer; color: var(--accent-ink); font-size: 14px; }
+  #syncMsg { font-size: 14px; margin: 4px 0 8px; }
+
+  /* ---- questionnaire ---- */
+  dialog#profile { width: min(680px, calc(100vw - 24px)); max-height: calc(100vh - 32px); padding: 0; overflow: hidden; }
+  dialog#profile[open] { display: flex; flex-direction: column; }
+  .pf-top { padding: 18px 22px 12px; border-bottom: 1px solid var(--line); }
+  .pf-top h2 { display: flex; justify-content: space-between; align-items: center; }
+  .pf-top p { margin: 0; }
+  .pf-progress { height: 4px; background: var(--chip); border-radius: 4px; margin-top: 12px; overflow: hidden; }
+  .pf-progress span { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+  .pf-body { overflow: auto; padding: 6px 22px 20px; flex: 1; }
+  .pf-sec { font-size: 13px; font-weight: 700; color: var(--accent-ink); letter-spacing: .3px; margin: 22px 0 4px;
+            text-transform: uppercase; }
+  .pf-q { padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .pf-q:last-child { border-bottom: 0; }
+  .pf-q .q { font-weight: 600; font-size: 15.5px; margin-bottom: 3px; display: flex; gap: 8px; }
+  .pf-q .q .num { color: var(--faint); font-weight: 500; min-width: 20px; }
+  .pf-q .hint { font-size: 13px; color: var(--muted); margin: 0 28px 8px 0; }
+  .pf-opts { display: flex; flex-wrap: wrap; gap: 7px; margin: 8px 28px 0 0; }
+  .opt { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 14px; font-size: 14px;
+         display: inline-flex; align-items: center; gap: 6px; }
+  .opt:hover { border-color: var(--faint); }
+  .opt[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); font-weight: 500; }
+  .opt[aria-pressed="true"]::before { content: "✓"; font-weight: 700; }
+  .pf-q input.pf-text { direction: rtl; text-align: right; margin: 8px 28px 0 0; width: calc(100% - 28px); }
+  .pf-foot { display: flex; gap: 8px; align-items: center; padding: 12px 22px; border-top: 1px solid var(--line); background: var(--surface); }
+  .pf-foot .msg { font-size: 13.5px; color: var(--muted); margin-inline-end: auto; }
+  .notice.cta { background: var(--accent-soft); color: var(--accent-ink); display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+  .notice.cta button { border: 0; background: var(--accent); color: var(--on-accent); border-radius: 8px; padding: 6px 12px; font-weight: 600; white-space: nowrap; }
+  @media (max-width: 899px) {
+    dialog#profile { width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; margin: 0; border: 0; }
+    .pf-top, .pf-body, .pf-foot { padding-left: 16px; padding-right: 16px; }
+    .pf-opts, .pf-q .hint { margin-right: 0; }
+    .pf-q input.pf-text { margin-right: 0; width: 100%; }
+    .pf-foot { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  }
+
+  /* ---- phone ---- */
+  @media (max-width: 899px) {
+    .topbar-in { padding: 8px 12px; gap: 8px; flex-wrap: wrap; }
+    .brand { font-size: 17px; } .brand img { width: 26px; height: 26px; }
+    .searchbox { order: 3; flex-basis: 100%; max-width: none; height: 40px; }
+    .status { display: none; }
+    .filters-in { padding: 8px 12px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+    .filters-in::-webkit-scrollbar { display: none; }
+    .dd-btn { height: 36px; font-size: 13.5px; max-width: 170px; flex-shrink: 0; }
+    .dd-panel, .dd-panel.wide { position: fixed; top: auto; bottom: 0; right: 0; left: 0; width: auto; max-height: 75vh;
+                border-radius: 16px 16px 0 0; padding: 4px 16px calc(18px + env(safe-area-inset-bottom)); z-index: 60; }
+    .dd-panel.open { animation: up .18s ease-out; }
+    @keyframes up { from { transform: translateY(30px); opacity: .4; } }
+    .dd-scrim.open { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 55; }
+    .dd-head { font-size: 17px; padding: 12px 0; }
+    .page { padding: 10px 12px 30px; }
+    .split { display: block; }
+    .detail { position: fixed; inset: 0; z-index: 50; max-height: none; border-radius: 0; border: 0;
+              transform: translateX(-100%); transition: transform .22s ease; visibility: hidden; }
+    .detail.open { transform: none; visibility: visible; }
+    .back { display: flex; align-items: center; gap: 6px; position: sticky; top: 0; z-index: 2; background: var(--surface);
+            border: 0; border-bottom: 1px solid var(--line); width: 100%; padding: 12px 14px; font-weight: 500; }
+    .d-head { padding: 16px 16px 14px; }
+    .d-body { padding: 4px 16px 90px; }
+    .d-title { font-size: 21px; }
+    .d-actions .btn.primary { flex: 1; justify-content: center; }
+    .listhead { flex-direction: column; align-items: stretch; }
+    .tab { flex: 1; padding: 8px 4px; font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11.5a7 7 0 0 1 14 0C19 14.9 12 21 12 21Z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="9.5" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-caret" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-bldg" viewBox="0 0 24 24"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M3 21h18M8 8h3M8 12h3M8 16h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21a8 8 0 0 1 16 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand"><img src="icon.svg" alt=""><span>המשרות שלי</span></div>
+    <label class="searchbox"><svg><use href="#i-search"/></svg>
+      <input id="search" type="search" placeholder="חיפוש לפי תפקיד, מקום עבודה או מילת מפתח" aria-label="חיפוש"></label>
+    <div class="top-actions">
+      <span class="status"><span class="sync-dot" id="dot"></span><span id="updated"></span></span>
+      <button id="refresh" class="icon-btn" title="רענון" aria-label="רענון"><svg><use href="#i-refresh"/></svg></button>
+      <button id="profileBtn" class="icon-btn" title="השאלון שלי" aria-label="השאלון שלי"><svg><use href="#i-user"/></svg></button>
+      <button id="gear" class="icon-btn" title="הגדרות" aria-label="הגדרות"><svg><use href="#i-gear"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<nav class="filters" aria-label="סינון">
+  <div class="filters-in">
+    <div class="dd">
+      <button class="dd-btn" data-dd="area" aria-expanded="false"><svg><use href="#i-pin"/></svg><span class="dd-val" id="v-area">אזור</span><svg class="caret"><use href="#i-caret"/></svg></button>
+      <div class="dd-panel" id="dd-area" role="dialog" aria-label="אזור">
+        <div class="dd-head">אזור<button class="dd-x" data-close aria-label="סגירה">✕</button></div>
+        <div class="group wrap" id="areas"></div>
+      </div>
+    </div>
+    <div class="dd">
+      <button class="dd-btn" data-dd="src" aria-expanded="false"><svg><use href="#i-search"/></svg><span class="dd-val" id="v-src">מקורות</span><svg class="caret"><use href="#i-caret"/></svg></button>
+      <div class="dd-panel" id="dd-src" role="dialog" aria-label="איפה מחפשים">
+        <div class="dd-head">איפה מחפשים<button class="dd-x" data-close aria-label="סגירה">✕</button></div>
+        <div class="group wrap" id="sources"></div>
+        <label class="pill switch" id="internalPill"><input type="checkbox" id="internal"><span class="knob"></span>גם מכרזים פנימיים (רק לעובדי מדינה)</label>
+      </div>
+    </div>
+    <div class="dd">
+      <button class="dd-btn" data-dd="emp" aria-expanded="false"><svg><use href="#i-bldg"/></svg><span class="dd-val" id="v-emp">כל המעסיקים</span><svg class="caret"><use href="#i-caret"/></svg></button>
+      <div class="dd-panel wide" id="dd-emp" role="dialog" aria-label="מעסיק">
+        <div class="dd-head">מעסיק<button class="dd-x" data-close aria-label="סגירה">✕</button></div>
+        <div class="group list" id="employers"></div>
+      </div>
+    </div>
+    <button class="clear-btn" id="clearFilters" hidden>ניקוי</button>
+  </div>
+  <div class="dd-scrim" id="ddScrim"></div>
+</nav>
+
+<main class="page">
+  <div id="notice"></div>
+  <div class="listhead">
+    <div class="tabs" id="tabs" role="tablist">
+      <button class="tab on" data-tab="all">מתאימות <span class="count" id="c-all"></span></button>
+      <button class="tab" data-tab="new">חדשות <span class="count" id="c-new"></span></button>
+      <button class="tab" data-tab="saved">שמורות <span class="count" id="c-saved"></span></button>
+      <button class="tab" data-tab="hidden">הוסתרו <span class="count" id="c-hidden"></span></button>
+    </div>
+  </div>
+  <div class="split">
+    <section>
+      <div id="list" class="joblist"><div class="loading">טוען משרות…</div></div>
+      <div class="more">
+        <b>בתי חולים שלא נבדקים אוטומטית:</b>
+        שערי צדק חוסם קריאה אוטומטית של אתר הדרושים שלו (משרות שלו שמתפרסמות ב־AllJobs או בדרושים כן מופיעות כאן).
+        <a href="https://www.szmc.org.il/" target="_blank" rel="noopener">אתר שערי צדק ↗</a> ·
+        <a href="https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&amp;position=&amp;type=&amp;freetxt=%D7%A9%D7%A2%D7%A8%D7%99%20%D7%A6%D7%93%D7%A7" target="_blank" rel="noopener">שערי צדק ב־AllJobs ↗</a> ·
+        <a href="https://www.drushim.co.il/jobs/search/%D7%A9%D7%A2%D7%A8%D7%99%20%D7%A6%D7%93%D7%A7/" target="_blank" rel="noopener">שערי צדק בדרושים ↗</a>
+      </div>
+    </section>
+    <aside id="detail" class="detail" aria-live="polite"><div class="d-empty">בחרי משרה מהרשימה כדי לראות את כל הפרטים.</div></aside>
+  </div>
+</main>
+
+<dialog id="profile" aria-labelledby="pfTitle">
+  <div class="pf-top">
+    <h2 id="pfTitle">השאלון שלי <button class="dd-x" id="pfClose" aria-label="סגירה">✕</button></h2>
+    <p>התשובות קובעות אילו משרות יופיעו ועל מה יגיעו התראות. אפשר לשנות בכל זמן.</p>
+    <div class="pf-progress"><span id="pfBar"></span></div>
+  </div>
+  <div class="pf-body" id="pfBody"></div>
+  <div class="pf-foot">
+    <span class="msg" id="pfMsg"></span>
+    <button class="btn ghost" id="pfReset">ברירת מחדל</button>
+    <button class="btn primary" id="pfSave">שמירה</button>
+  </div>
+</dialog>
+
+<dialog id="settings">
+  <h2>הגדרות</h2>
+  <h3>סנכרון בין הטלפון למחשב</h3>
+  <div id="syncMsg"></div>
+  <p>כדי שהמשרות השמורות, המוסתרות והאזורים יהיו זהים בכל המכשירים, מדביקים פעם אחת בכל מכשיר מפתח של GitHub.</p>
+  <label>מפתח
+    <input type="password" id="token" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
+  </label>
+  <label>מאגר
+    <input type="text" id="repo" autocomplete="off" spellcheck="false">
+  </label>
+  <div class="row">
+    <button class="btn primary" id="saveKey">שמירה וחיבור</button>
+    <button class="btn" id="forget">ניתוק המכשיר</button>
+  </div>
+  <details>
+    <summary>איך יוצרים מפתח</summary>
+    <ol>
+      <li>נכנסים ל־<a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a> (בחשבון kostakhrizman).</li>
+      <li>Repository access ← Only select repositories ← <b>jobs-data</b>.</li>
+      <li>Permissions ← Contents: <b>Read and write</b>. אפשר לבחור תוקף ארוך.</li>
+      <li>Generate token, מעתיקים ומדביקים כאן.</li>
+    </ol>
+  </details>
+  <h3>מה מחפשים</h3>
+  <p>ענו על השאלון כדי שהרשימה וההתראות יתאימו בדיוק.</p>
+  <div class="row"><button class="btn" id="openProfile">לשאלון</button></div>
+  <h3>התראות</h3>
+  <p>פעם ביום בסביבות 9:00 משרות חדשות מגיעות לאפליקציית ntfy בטלפון (ערוץ <span dir="ltr">jobs-a9843eaa3bc3</span>). לחיצה על ההתראה פותחת את המשרה כאן.</p>
+  <div class="row" id="installRow" hidden><button class="btn" id="install">הוספה למסך הבית</button></div>
+  <div class="row" style="margin-top:14px; justify-content:flex-end"><button class="btn" id="closeSettings">סגירה</button></div>
+</dialog>
+
+<script>
+"use strict";
+// Jobs come from jobs.json, which the home PC rebuilds every two hours (the gov site only answers Israel
+// and sends no CORS headers, so the browser can't read it). Saved / hidden / seen / prefs live in
+// state.json of the PRIVATE repo jobs-data, read and written with the GitHub contents API and a key each
+// device enters once (same idea as the recipes app). Without a key everything stays on this device.
+
+const AREAS_DEFAULT = ["ירושלים", "מרכז", "תל אביב", "צפון", "חיפה", "דרום", "יהודה ושומרון", 'חו"ל'];
+const SOURCES = { gov: "שירות המדינה", hadassah: "הדסה", alljobs: "AllJobs", drushim: "דרושים" };
+const DEFAULT_PREFS = { areas: ["ירושלים", "מרכז"], includeInternal: false, sources: Object.keys(SOURCES) };
+const DEFAULT_REPO = "kostakhrizman/jobs-data";
+const K = { sync: "jobsSync", state: "jobsState", pending: "jobsPending", jobs: "jobsLast", newIds: "jobsNewIds" };
+const TIER = { high: "התאמה גבוהה", maybe: "אולי מתאים", open: "פתוח לכל תואר" };
+const LOGO_COLORS = ["#0f766e", "#1d4ed8", "#7c3aed", "#b45309", "#be185d", "#15803d", "#0369a1", "#9333ea", "#c2410c", "#334155"];
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const read = (k, d, store = localStorage) => { try { return JSON.parse(store.getItem(k)) ?? d; } catch { return d; } };
+const write = (k, v, store = localStorage) => { try { store.setItem(k, JSON.stringify(v)); } catch {} };
+const icon = (name) => `<svg><use href="#i-${name}"/></svg>`;
+const wide = () => matchMedia("(min-width: 900px)").matches;
+
+let data = null;          // jobs.json
+let offline = false;      // jobs.json came from this device's copy
+let tab = "all", query = "";
+let selectedId = null;    // the job shown in the detail pane
+let employer = read("jobsEmployer", "");  // show only this employer's jobs ("" = all); kept on this device
+let newIds = new Set(read(K.newIds, [], sessionStorage));
+let state = normState(read(K.state, {}));
+let pending = read(K.pending, []);
+let syncStatus = { s: "local", detail: "" };
+
+function normState(s) {
+  return { saved: s.saved || [], hidden: s.hidden || [], seen: s.seen || null,
+           prefs: { ...DEFAULT_PREFS, ...(s.prefs || {}) }, profile: s.profile || null };
+}
+
+// ---------- shared state (GitHub) ----------
+const settings = () => read(K.sync, {});
+const configured = () => { const s = settings(); return Boolean(s.token && s.repo); };
+const apiUrl = (s) => `https://api.github.com/repos/${s.repo}/contents/state.json`;
+const headers = (s) => ({ Authorization: `Bearer ${s.token}`, Accept: "application/vnd.github+json" });
+const decode = (b64) => { const bin = atob(b64.replace(/\s/g, "")); const u = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new TextDecoder().decode(u); };
+const encode = (text) => { const u = new TextEncoder().encode(text); let bin = "";
+  for (let i = 0; i < u.length; i += 0x8000) bin += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(bin); };
+
+function apply(st, op) {
+  st = normState(JSON.parse(JSON.stringify(st)));
+  const add = (list, id) => list.includes(id) ? list : [...list, id];
+  const del = (list, id) => list.filter(x => x !== id);
+  if (op.t === "save") st.saved = add(st.saved, op.id);
+  if (op.t === "unsave") st.saved = del(st.saved, op.id);
+  if (op.t === "hide") st.hidden = add(st.hidden, op.id);
+  if (op.t === "unhide") st.hidden = del(st.hidden, op.id);
+  if (op.t === "prefs") st.prefs = { ...st.prefs, ...op.prefs };
+  if (op.t === "profile") st.profile = { ...op.profile };
+  if (op.t === "seen") {
+    const keep = new Set(op.open || []);
+    st.seen = [...new Set([...(st.seen || []).filter(id => !op.open || keep.has(id)), ...op.ids])];
+  }
+  return st;
+}
+
+function change(op) {
+  state = apply(state, op);
+  pending.push(op);
+  write(K.state, state); write(K.pending, pending);
+  render();
+  clearTimeout(change.timer);
+  change.timer = setTimeout(sync, 600);
+}
+
+function setSync(s, detail = "") {
+  syncStatus = { s, detail };
+  const dot = $("#dot");
+  dot.className = "sync-dot " + ({ ok: "ok", error: "err", saving: "busy", offline: "err" }[s] || "");
+  dot.title = { ok: "מסונכרן", error: "שגיאת סנכרון", saving: "שומר…", offline: "אין חיבור", local: "שמור רק במכשיר הזה" }[s] || "";
+  renderSyncMsg();
+}
+
+let syncing = null;
+function sync() { // read state.json, apply this device's pending changes on top, write it back
+  if (!configured()) { setSync("local"); return Promise.resolve(false); }
+  if (syncing) { sync.again = true; return syncing; }
+  syncing = (async () => {
+    const s = settings();
+    try {
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const r = await fetch(apiUrl(s), { headers: headers(s), cache: "no-store" });
+        let remote = {}, sha = null;
+        if (r.ok) { const j = await r.json(); sha = j.sha; remote = JSON.parse(decode(j.content || "") || "{}"); }
+        else if (r.status !== 404) throw await httpError(r);
+        const ops = pending.slice();
+        const merged = ops.reduce(apply, normState(remote));
+        if (!ops.length && sha) { state = merged; write(K.state, state); setSync("ok"); return true; }
+        setSync("saving");
+        const body = { message: "Update job app state", content: encode(JSON.stringify(merged, null, 1)) };
+        if (sha) body.sha = sha;
+        const w = await fetch(apiUrl(s), { method: "PUT", headers: { ...headers(s), "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        if (w.ok) {
+          pending = pending.slice(ops.length);
+          state = pending.reduce(apply, merged);
+          write(K.state, state); write(K.pending, pending);
+          setSync("ok");
+          return true;
+        }
+        if (w.status !== 409 && w.status !== 422) throw await httpError(w);
+        // the other device saved in between: read again and retry
+      }
+      throw new Error("conflict");
+    } catch (e) {
+      setSync(navigator.onLine ? "error" : "offline", e.status ? `${e.status} ${e.detail || ""}` : String(e.message || e));
+      return false;
+    } finally {
+      syncing = null;
+      render();
+      if (sync.again) { sync.again = false; setTimeout(sync, 0); }
+    }
+  })();
+  return syncing;
+}
+
+async function httpError(r) {
+  let detail = ""; try { detail = (await r.json()).message || ""; } catch {}
+  return Object.assign(new Error("GitHub " + r.status), { status: r.status, detail });
+}
+
+// ---------- jobs ----------
+async function loadJobs() {
+  try {
+    const r = await fetch("jobs.json?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status);
+    data = await r.json();
+    offline = false;
+    write(K.jobs, data);
+  } catch (e) {
+    const last = read(K.jobs, null);
+    if (last) { data = last; offline = true; }
+    else if (!data) throw e;
+    else offline = true;
+  }
+}
+
+function daysLeft(j) { // DaysLeft was counted on the day of the download; count down from there
+  const fetched = new Date((data.updated || "").slice(0, 10) + "T00:00:00");
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const passed = isNaN(fetched) ? 0 : Math.round((today - fetched) / 864e5);
+  return j.daysLeft - Math.max(0, passed);
+}
+
+const isSaved = (j) => state.saved.includes(j.id);
+const isHidden = (j) => state.hidden.includes(j.id);
+const areas = () => (data && data.areas) || AREAS_DEFAULT;
+
+function inPrefs(j) {
+  const p = state.prefs;
+  const where = j.areas && j.areas.length ? j.areas : (j.area ? [j.area] : []);
+  const areaOk = !p.areas.length || !where.length || where.some(a => p.areas.includes(a)); // unknown place: keep
+  const src = j.source || "gov";
+  // a source added after she last chose sources counts as on (sourcesKnown = the ones she saw then)
+  const known = p.sourcesKnown || ["gov", "hadassah", "alljobs"];
+  const srcOk = !p.sources || p.sources.includes(src) || !known.includes(src);
+  return areaOk && srcOk && (j.public || p.includeInternal);
+}
+function matchesQuery(j) {
+  if (!query) return true;
+  const hay = [j.title, j.office, j.unit, j.location, j.area, j.type, j.tender, j.desc, j.req, j.remarks].join(" ").toLowerCase();
+  return query.toLowerCase().split(/\s+/).every(w => hay.includes(w));
+}
+
+function fmtTime(iso) {
+  if (!iso) return "";
+  const [d, t] = iso.split("T");
+  const [y, m, dd] = d.split("-");
+  const today = new Date().toISOString().slice(0, 10) === d;
+  return (today ? "היום" : `${+dd}.${+m}`) + (t ? " " + t.slice(0, 5) : "");
+}
+
+// company "logo": two initials on a color picked from the name
+function initials(name) {
+  const words = String(name || "?").replace(/["'״׳()]/g, "").split(/\s+/).filter(w => w && !/^(של|ה|ו|ב|ל)$/.test(w));
+  return words.length > 1 ? words[0][0] + words[1][0] : (words[0] || "?").slice(0, 2);
+}
+function logoColor(name) {
+  let h = 0; for (const ch of String(name)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return LOGO_COLORS[h % LOGO_COLORS.length];
+}
+// district health offices belong to the Ministry of Health: one employer filter for both
+const empOf = (j) => /^לשכת הבריאות/.test(j.office || "") ? "משרד הבריאות" : (j.office || "");
+function logo(name, emp = name) { // a button: tapping it shows only this employer's jobs
+  return `<button class="logo" style="background:${logoColor(name)}" data-employer="${esc(emp)}" title="רק משרות של ${esc(emp)}" aria-label="רק משרות של ${esc(emp)}">${esc(initials(name))}</button>`;
+}
+function setEmployer(name) {
+  employer = name; write("jobsEmployer", employer);
+  render(); window.scrollTo({ top: 0 });
+  openDD(null);
+}
+
+function deadlineInfo(j) {
+  if (j.deadline) {
+    const d = daysLeft(j);
+    const left = d <= 0 ? "היום אחרון להגשה" : d === 1 ? "נשאר יום אחד" : `נשארו ${d} ימים`;
+    return { short: d <= 3 ? `<span class="urgent">${left}</span>` : d <= 7 ? `<span class="soon">${left}</span>` : left,
+             long: `עד ${esc(j.deadline)}` };
+  }
+  return j.posted ? { short: `פורסם ${esc(j.posted)}`, long: "" } : { short: "", long: "" };
+}
+
+// ---------- render ----------
+function renderFilters() {
+  const box = $("#areas");
+  box.querySelectorAll(".pill").forEach(c => c.remove());
+  areas().forEach(a => {
+    const b = document.createElement("button");
+    b.className = "pill" + (state.prefs.areas.includes(a) ? " on" : "");
+    b.textContent = a;
+    b.onclick = () => {
+      const set = new Set(state.prefs.areas);
+      set.has(a) ? set.delete(a) : set.add(a);
+      change({ t: "prefs", prefs: { areas: areas().filter(x => set.has(x)) } });
+    };
+    box.appendChild(b);
+  });
+  $("#internal").checked = state.prefs.includeInternal;
+  $("#internalPill").classList.toggle("on", state.prefs.includeInternal);
+  const sbox = $("#sources");
+  sbox.querySelectorAll(".pill").forEach(c => c.remove());
+  const known = state.prefs.sourcesKnown || ["gov", "hadassah", "alljobs"];
+  const on = (state.prefs.sources || Object.keys(SOURCES)).concat(Object.keys(SOURCES).filter(k => !known.includes(k)));
+  Object.entries(SOURCES).forEach(([k, label]) => {
+    const n = data ? data.jobs.filter(j => (j.source || "gov") === k).length : 0;
+    const b = document.createElement("button");
+    b.className = "pill" + (on.includes(k) ? " on" : "");
+    b.innerHTML = `${esc(label)}<span class="n">${n || ""}</span>`;
+    b.onclick = () => {
+      const set = new Set(on);
+      set.has(k) ? set.delete(k) : set.add(k);
+      change({ t: "prefs", prefs: { sources: Object.keys(SOURCES).filter(x => set.has(x)), sourcesKnown: Object.keys(SOURCES) } });
+    };
+    sbox.appendChild(b);
+  });
+}
+
+function renderEmployers(jobs) {
+  const counts = new Map();
+  jobs.forEach(j => counts.set(empOf(j), (counts.get(empOf(j)) || 0) + 1));
+  if (employer && !counts.has(employer)) counts.set(employer, 0); // keep the chosen one visible
+  const list = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "he"));
+  const box = $("#employers");
+  box.querySelectorAll(".pill").forEach(c => c.remove());
+  const all = document.createElement("button");
+  all.className = "pill" + (employer ? "" : " on");
+  all.innerHTML = `כל המעסיקים<span class="n">${jobs.length || ""}</span>`;
+  all.onclick = () => setEmployer("");
+  box.appendChild(all);
+  list.forEach(([name, n]) => {
+    const b = document.createElement("button");
+    b.className = "pill" + (name === employer ? " on" : "");
+    b.innerHTML = `<span class="mini" style="background:${logoColor(name)}">${esc(initials(name))}</span>${esc(name)}<span class="n">${n || ""}</span>`;
+    b.onclick = () => setEmployer(name === employer ? "" : name);
+    box.appendChild(b);
+  });
+}
+
+// ---------- filter dropdowns ----------
+function openDD(name) {
+  document.querySelectorAll(".dd-panel").forEach(p => p.classList.toggle("open", p.id === "dd-" + name));
+  document.querySelectorAll(".dd-btn").forEach(b => b.setAttribute("aria-expanded", String(b.dataset.dd === name)));
+  $("#ddScrim").classList.toggle("open", Boolean(name));
+}
+document.querySelectorAll(".dd-btn").forEach(b => b.onclick = (e) => {
+  e.stopPropagation();
+  openDD(b.getAttribute("aria-expanded") === "true" ? null : b.dataset.dd);
+});
+document.addEventListener("click", e => {
+  // pills re-render on click, so a detached target is still a click inside the panel
+  if (!e.target.isConnected || (e.target.closest(".dd-panel") && !e.target.closest("[data-close]"))) return;
+  if ($(".dd-panel.open") && !e.target.closest(".dd-btn")) openDD(null);
+});
+$("#clearFilters").onclick = () => {
+  change({ t: "prefs", prefs: { areas: [], sources: Object.keys(SOURCES), sourcesKnown: Object.keys(SOURCES), includeInternal: false } });
+  setEmployer("");
+};
+
+function renderFilterLabels() {
+  const p = state.prefs, all = areas();
+  const a = p.areas.length === 0 || p.areas.length === all.length ? "כל הארץ"
+    : p.areas.length <= 2 ? p.areas.join(", ") : `${p.areas[0]} ועוד ${p.areas.length - 1}`;
+  $("#v-area").textContent = a;
+  $('[data-dd="area"]').classList.toggle("set", a !== "כל הארץ");
+  const known = p.sourcesKnown || ["gov", "hadassah", "alljobs"];
+  const on = Object.keys(SOURCES).filter(k => (p.sources || Object.keys(SOURCES)).includes(k) || !known.includes(k));
+  const src = on.length === Object.keys(SOURCES).length ? "כל המקורות" : on.length === 1 ? SOURCES[on[0]] : `${on.length} מקורות`;
+  $("#v-src").textContent = src + (p.includeInternal ? " + פנימיים" : "");
+  $('[data-dd="src"]').classList.toggle("set", src !== "כל המקורות" || p.includeInternal);
+  $("#v-emp").textContent = employer || "כל המעסיקים";
+  $('[data-dd="emp"]').classList.toggle("set", Boolean(employer));
+  $("#clearFilters").hidden = !document.querySelector(".dd-btn.set");
+}
+
+function render() {
+  if (!data) return;
+  renderFilters();
+  const jobs = data.jobs;
+  const prefBase = jobs.filter(inPrefs).filter(matchesQuery);
+  renderEmployers(prefBase.filter(j => !isHidden(j)));
+  renderFilterLabels();
+  const byEmp = (j) => !employer || empOf(j) === employer;
+  const base = prefBase.filter(byEmp);
+  const lists = {
+    all: base.filter(j => !isHidden(j)),
+    new: base.filter(j => newIds.has(j.id) && !isHidden(j)),
+    saved: jobs.filter(isSaved).filter(matchesQuery).filter(byEmp),
+    hidden: base.filter(isHidden),
+  };
+  for (const k in lists) $("#c-" + k).textContent = lists[k].length || "";  // no "0" badges
+  $("#updated").textContent = data.updated ? "עודכן " + fmtTime(data.updated) : "";
+
+  const notes = [];
+  if (offline) notes.push("אין חיבור לאינטרנט. מוצגות המשרות האחרונות שנשמרו במכשיר.");
+  if (data.error) notes.push(`האתר של נציבות שירות המדינה לא ענה בבדיקה האחרונה (${fmtTime(data.checked)}). מוצגות המשרות מ־${fmtTime(data.updated)}.`);
+  const down = Object.entries(data.sources || {}).filter(([k, e]) => e && k !== "gov").map(([k]) => SOURCES[k] || k);
+  if (down.length) notes.push(`${down.join(" ו־")} לא ענה בבדיקה האחרונה. מוצגות המשרות שנמצאו שם קודם.`);
+  if (!data.error && data.updated && Date.now() - new Date(data.updated).getTime() > 30 * 36e5)
+    notes.push(`הרשימה לא עודכנה מאז ${fmtTime(data.updated)}. ייתכן שהמחשב בבית כבוי.`);
+  const pending = state.profile && state.profile.savedAt && state.profile.savedAt !== data.profileSavedAt;
+  if (pending) notes.push("התשובות החדשות לשאלון ייכנסו לרשימה בעדכון הבא (עד שעתיים, כשהמחשב בבית דולק).");
+  $("#notice").innerHTML = notes.map(n => `<div class="notice">${esc(n)}</div>`).join("")
+    + (state.profile ? "" : `<div class="notice cta"><span>כמה שאלות קצרות על ההשכלה, הניסיון ומה את מחפשת ישפרו את ההתאמה.</span>
+        <button data-open-profile>לשאלון</button></div>`);
+
+  // a job opened from a notification (#job=<id>) is shown first and selected, whatever the filters
+  const fid = focusId();
+  const fj = fid && jobs.find(j => j.id === fid);
+  let items = lists[tab];
+  if (fj && !items.includes(fj)) items = [fj, ...items];
+  else if (fj) items = [fj, ...items.filter(j => j !== fj)];
+
+  const focusNote = fid ? `<div class="from-note"><span>${fj ? "המשרה מההתראה" : "המשרה מההתראה כבר לא פתוחה להגשה."}</span>
+      <button data-act="unfocus">הצגת כל המשרות</button></div>` : "";
+  if (!items.length) {
+    const msg = {
+      all: "אין כרגע משרות מתאימות באזורים שבחרת.<br>אפשר להוסיף אזורים למעלה, ונבדוק שוב מחר בבוקר.",
+      new: "אין משרות חדשות מאז הפעם הקודמת.",
+      saved: "עוד לא שמרת משרות. לחצי על סימן השמירה כדי לשמור משרה.",
+      hidden: "אין משרות מוסתרות.",
+    }[tab];
+    $("#list").innerHTML = focusNote + `<div class="empty">${query ? "לא נמצאו משרות שמתאימות לחיפוש." : msg}</div>`;
+    selectedId = null;
+    renderDetail(null);
+    return;
+  }
+  if (fj) selectedId = fj.id;
+  else if (!items.some(j => j.id === selectedId)) selectedId = wide() ? items[0].id : null;
+  $("#list").innerHTML = focusNote + items.map(cardHtml).join("");
+  renderDetail(jobs.find(j => j.id === selectedId) || null);
+}
+
+function cardHtml(j) {
+  const dl = deadlineInfo(j);
+  const saved = isSaved(j);
+  return `
+  <article class="jc${j.id === selectedId ? " sel" : ""}" data-id="${esc(j.id)}" tabindex="0">
+    ${logo(j.office, empOf(j))}
+    <div class="co"><button class="emp-link" data-employer="${esc(empOf(j))}">${esc(j.office)}</button></div>
+    <button class="save-ic${saved ? " on" : ""}" data-act="${saved ? "unsave" : "save"}" title="${saved ? "שמורה" : "שמירה"}" aria-label="${saved ? "הסרה מהשמורות" : "שמירה"}">${icon("save")}</button>
+    <div class="t">${esc(j.title)}</div>
+    <div class="loc"><span>${esc(j.location)}</span>${dl.short ? `<span>${dl.short}</span>` : ""}</div>
+    <div class="tags">
+      <span class="tag ${j.tier}">${TIER[j.tier] || TIER.maybe}</span>
+      ${newIds.has(j.id) ? '<span class="tag new">חדש</span>' : ""}
+      <span class="tag">${esc(j.type)}</span>
+      ${j.percent ? `<span class="tag">${esc(j.percent)}%</span>` : ""}
+    </div>
+  </article>`;
+}
+
+function renderDetail(j) {
+  const box = $("#detail");
+  if (!j) {
+    box.classList.remove("open");
+    box.innerHTML = '<div class="d-empty">בחרי משרה מהרשימה כדי לראות את כל הפרטים.</div>';
+    return;
+  }
+  const dl = deadlineInfo(j);
+  const saved = isSaved(j), hidden = isHidden(j);
+  const facts = [
+    ["סוג", j.type], ["מספר מכרז", j.tender], ["היקף משרה", j.percent ? j.percent + "%" : ""],
+    ["מועד אחרון", j.deadline ? `${j.deadline}` : ""], ["פורסם", j.posted], ["אזור", (j.areas && j.areas.length ? j.areas : [j.area]).filter(Boolean).join(", ")],
+  ].filter(([, v]) => v);
+  box.innerHTML = `
+    <button class="back" data-act="close">${icon("back")} חזרה לרשימה</button>
+    <div class="d-head" data-id="${esc(j.id)}">
+      <div class="d-co">${logo(j.office, empOf(j))}<div><button class="emp-link name" data-employer="${esc(empOf(j))}">${esc(j.office)}</button>${j.unit ? `<div class="unit">${esc(j.unit)}</div>` : ""}</div></div>
+      <h2 class="d-title">${esc(j.title)}</h2>
+      <div class="d-meta">
+        <span>${icon("pin")}${esc(j.location)}</span>
+        ${dl.short ? `<span>${icon("clock")}${dl.long ? dl.long + " · " : ""}${dl.short}</span>` : ""}
+      </div>
+      <div class="d-actions">
+        <a class="btn primary" href="${esc(j.url)}" target="_blank" rel="noopener">לפרטים ולהגשה ${icon("ext")}</a>
+        <button class="btn${saved ? " saved" : ""}" data-act="${saved ? "unsave" : "save"}">${icon("save")}${saved ? "שמורה" : "שמירה"}</button>
+        <button class="btn ghost" data-act="${hidden ? "unhide" : "hide"}">${hidden ? "החזרה לרשימה" : "לא מעניין"}</button>
+      </div>
+    </div>
+    <div class="d-body" data-id="${esc(j.id)}">
+      <div class="d-sec"><h3>${j.tier === "open" ? "למה זה מופיע" : "למה זה מתאים לך"} <span class="tag ${j.tier}">${TIER[j.tier] || TIER.maybe}</span></h3>
+        <ul class="why">${j.reasons.map(r => `<li>${esc(r)}</li>`).join("")}</ul></div>
+      ${facts.length ? `<div class="d-sec"><h3>פרטי המשרה</h3><div class="facts">${facts.map(([k, v]) => `<div class="fact"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`).join("")}</div></div>` : ""}
+      ${j.req ? `<div class="d-sec"><h3>דרישות</h3><div class="txt">${esc(j.req)}</div></div>` : ""}
+      ${j.desc ? `<div class="d-sec"><h3>תיאור התפקיד</h3><div class="txt">${esc(j.desc)}</div></div>` : ""}
+      ${j.remarks ? `<div class="d-sec"><h3>הערות</h3><div class="txt">${esc(j.remarks)}</div></div>` : ""}
+    </div>`;
+}
+
+function openJob(id) {
+  selectedId = id;
+  render();
+  if (!wide()) { $("#detail").classList.add("open"); $("#detail").scrollTop = 0; history.pushState({ detail: id }, ""); }
+  else $("#detail").scrollTop = 0;
+}
+
+function focusId() { const m = location.hash.match(/job=([^&]+)/); return m ? decodeURIComponent(m[1]) : null; }
+
+// ---------- questionnaire ----------
+// Keep the keys in sync with her_profile.py (DEFAULT_PROFILE and the option tables there).
+const DEFAULT_PROFILE = {
+  degree: "ms", fields: ["optometry", "neuro", "biomed", "bio", "biochem", "biotech", "health"], licenses: ["optometrist"],
+  years: "1-2", experience: [], moreExperience: "mark", languages: ["he", "en"],
+  types: ["research", "lab", "teaching", "regulation", "health_admin", "open"],
+  subjects: ["anatomy", "pathology", "eyes", "physiology", "histology"], employers: [], management: "yes", scope: "any",
+  keywords: "", exclude: "", notify: "all", notifyMax: "10",
+  skills: [], driving: "yes", cities: "", remote: "any", shifts: "ok", temporary: "ok",
+};
+const QUESTIONS = [
+  { sec: "השכלה" },
+  { id: "degree", q: "מה התואר הגבוה ביותר שלך?", one: [["ba", "תואר ראשון"], ["ms", "תואר שני"], ["phd", "תואר שלישי (דוקטורט)"]],
+    hint: "משרות שדורשות תואר גבוה יותר לא יוצגו." },
+  { id: "fields", q: "באילו תחומים התארים שלך?", hint: "משרות שדורשות תואר באחד התחומים האלה יסומנו כהתאמה.",
+    many: [["optometry", "אופטומטריה / מדעי הראייה"], ["neuro", "נוירוביולוגיה / מדעי המוח"], ["biomed", "ביו־רפואה / מדעי הרפואה"],
+           ["bio", "מדעי החיים / ביולוגיה"], ["biochem", "ביוכימיה / מיקרוביולוגיה"], ["biotech", "ביוטכנולוגיה"],
+           ["health", "מדעי הבריאות"], ["publichealth", "בריאות הציבור / אפידמיולוגיה"], ["stats", "סטטיסטיקה / ביואינפורמטיקה"],
+           ["chem", "כימיה"]] },
+  { id: "licenses", q: "אילו רישיונות ותעודות יש לך?",
+    many: [["optometrist", "רישיון אופטומטריסט"], ["lab_cert", "תעודת הכרה במעמד (עובד/ת מעבדה רפואית)"],
+           ["gcp", "תעודת GCP"], ["teaching", "תעודת הוראה"]],
+    hint: "בלי תעודת הכרה במעמד, משרות שדורשות אותה לא יוצגו." },
+  { sec: "ניסיון" },
+  { id: "years", q: "כמה שנות ניסיון מקצועי יש לך?", one: [["0", "בלי ניסיון"], ["1-2", "1–2 שנים"], ["3-5", "3–5 שנים"], ["6+", "6 ומעלה"]] },
+  { id: "moreExperience", q: "משרות שדורשות יותר שנות ניסיון ממה שיש לך:", one: [["mark", "להציג עם סימון ⚠"], ["hide", "להסתיר"]] },
+  { id: "experience", q: "במה יש לך ניסיון?", hint: "משרות שמבקשות את הניסיון הזה יעלו למעלה.",
+    many: [["lab", "עבודה במעבדת מחקר"], ["trials", "ניסויים קליניים / תיאום מחקר"], ["clinic", "בדיקות ראייה וקליניקה"],
+           ["teaching", "הוראה / הדרכה"], ["data", "ניתוח נתונים / סטטיסטיקה"], ["admin", "אדמיניסטרציה / ניהול פרויקטים"],
+           ["team", "ניהול צוות"]] },
+  { id: "skills", q: "אילו כישורים מעבדתיים ומחקריים יש לך?", hint: "משרות שמבקשות אותם יעלו למעלה.",
+    many: [["molbio", "ביולוגיה מולקולרית (PCR, Western, ELISA)"], ["cells", "תרביות תאים"], ["microscopy", "מיקרוסקופיה"],
+           ["imaging", "הדמיה / EEG / אלקטרופיזיולוגיה"], ["animals", "עבודה עם חיות מעבדה"],
+           ["stats", "סטטיסטיקה ותכנות (SPSS, R, Python, MATLAB)"], ["clinical_data", "ניהול נתונים קליניים (REDCap, CRF)"],
+           ["writing", "כתיבה מדעית ומענקים"]] },
+  { id: "driving", q: "יש לך רישיון נהיגה ורכב?", one: [["yes", "כן"], ["no", "לא"]],
+    hint: "אם לא, משרות שדורשות רישיון נהיגה או ניידות לא יוצגו." },
+  { id: "languages", q: "באילו שפות את שולטת?", hint: "משרות שמבקשות שפה שאת דוברת (מעבר לעברית ואנגלית) יעלו למעלה.",
+    many: [["he", "עברית"], ["en", "אנגלית"], ["ru", "רוסית"], ["ar", "ערבית"], ["fr", "צרפתית"], ["am", "אמהרית"]] },
+  { sec: "מה את מחפשת" },
+  { id: "types", q: "אילו סוגי משרות מעניינים אותך?", hint: "סוג שלא מסומן לא יוצג.",
+    many: [["research", "מחקר וניסויים קליניים"], ["lab", "עבודת מעבדה"], ["teaching", "הוראה והרצאה"],
+           ["regulation", "רגולציה, פיקוח ובקרה"], ["health_admin", "מטה ומנהלה במערכת הבריאות"],
+           ["open", "משרות פתוחות לכל בעלי תואר"], ["optometry_clinic", "עבודה קלינית כאופטומטריסטית"]] },
+  { id: "subjects", q: "אילו נושאים היית רוצה ללמד?", hint: "משרות מרצה / מתרגל/ת בנושאים האלה יסומנו כהתאמה גבוהה.",
+    many: [["anatomy", "אנטומיה"], ["pathology", "פתולוגיה"], ["eyes", "עיניים / ראייה / אופטומטריה"], ["physiology", "פיזיולוגיה"],
+           ["histology", "היסטולוגיה"], ["neuro", "מדעי המוח"], ["biology", "ביולוגיה"]] },
+  { id: "employers", q: "אצל אילו מעסיקים את מעדיפה לעבוד?", hint: "משרות אצלם יעלו למעלה ברשימה (אחרים עדיין יוצגו).",
+    many: [["gov", "משרדי ממשלה"], ["hospital", "בתי חולים"], ["academia", "אוניברסיטאות ומכללות"], ["hmo", "קופות חולים"],
+           ["industry", "תרופות, ביוטק ומכשור רפואי"]] },
+  { id: "management", q: "תפקידי ניהול (של צוות או יחידה)?", one: [["yes", "כן, גם ניהול"], ["small", "עד ראש צוות"], ["no", "בלי ניהול"]] },
+  { id: "scope", q: "איזה היקף משרה?", one: [["any", "לא משנה"], ["full", "משרה מלאה"], ["part", "משרה חלקית"]] },
+  { id: "temporary", q: "משרות זמניות (מילוי מקום, חופשת לידה, לתקופה קצובה)?", one: [["ok", "גם זמניות"], ["no", "רק קבועות"]] },
+  { id: "shifts", q: "עבודה במשמרות, בלילות או בסופי שבוע?", one: [["ok", "אפשר"], ["no", "לא מתאים לי"]] },
+  { id: "remote", q: "עבודה מהבית או היברידית?", one: [["any", "לא משנה"], ["prefer", "חשוב לי"]],
+    hint: "אם חשוב לך, משרות שמציעות עבודה היברידית יעלו למעלה." },
+  { id: "cities", q: "ערים מועדפות", text: "למשל: ירושלים, מבשרת ציון, בית שמש",
+    hint: "מופרדות בפסיק. משרות בערים האלה יעלו למעלה (האזורים עצמם נבחרים בסינון למעלה)." },
+  { id: "keywords", q: "מילים נוספות לחיפוש", text: "למשל: אפידמיולוגיה, שיקום ראייה",
+    hint: "מופרדות בפסיק. משרות שהמילה בכותרת שלהן יוצגו, ונחפש אותן גם ב־AllJobs ובדרושים." },
+  { id: "exclude", q: "מילים שלא רוצים לראות בכותרת", text: "למשל: משמרות, מכירות", hint: "מופרדות בפסיק." },
+  { sec: "התראות" },
+  { id: "notify", q: "על אילו משרות לשלוח התראה בבוקר?",
+    one: [["high", "רק התאמה גבוהה"], ["maybe", "גבוהה + אולי מתאים"], ["all", "הכל, גם פתוח לכל תואר"]] },
+  { id: "notifyMax", q: "כמה התראות נפרדות ביום לכל היותר?", hint: "השאר יגיעו בהודעת סיכום אחת.",
+    one: [["3", "3"], ["5", "5"], ["10", "10"], ["20", "20"]] },
+];
+let draft = null;
+
+function openProfile() {
+  draft = JSON.parse(JSON.stringify({ ...DEFAULT_PROFILE, ...(state.profile || {}) }));
+  renderProfile();
+  $("#pfMsg").textContent = state.profile ? "" : "התשובות שמסומנות כבר הן ההגדרות הנוכחיות.";
+  $("#profile").showModal();
+  $("#pfBody").scrollTop = 0;
+}
+
+function renderProfile() {
+  let n = 0, answered = 0, total = 0;
+  $("#pfBody").innerHTML = QUESTIONS.map(q => {
+    if (q.sec) return `<div class="pf-sec">${esc(q.sec)}</div>`;
+    n++; total++;
+    const v = draft[q.id];
+    if (q.text ? true : Array.isArray(v) ? v.length : v) answered++;
+    const opts = (q.one || q.many || []).map(([k, label]) => {
+      const on = q.many ? v.includes(k) : v === k;
+      return `<button type="button" class="opt" data-q="${q.id}" data-k="${esc(k)}" aria-pressed="${on}">${esc(label)}</button>`;
+    }).join("");
+    return `<div class="pf-q"><div class="q"><span class="num">${n}.</span><span>${esc(q.q)}</span></div>
+      ${q.hint ? `<div class="hint">${esc(q.hint)}</div>` : ""}
+      ${q.text ? `<input type="text" class="pf-text" data-q="${q.id}" value="${esc(v)}" placeholder="${esc(q.text)}">` : `<div class="pf-opts">${opts}</div>`}
+    </div>`;
+  }).join("");
+  $("#pfBar").style.width = Math.round(100 * answered / total) + "%";
+}
+
+$("#pfBody").addEventListener("click", e => {
+  const b = e.target.closest(".opt"); if (!b) return;
+  const q = QUESTIONS.find(x => x.id === b.dataset.q), k = b.dataset.k;
+  if (q.many) draft[q.id] = draft[q.id].includes(k) ? draft[q.id].filter(x => x !== k) : [...draft[q.id], k];
+  else draft[q.id] = k;
+  const top = $("#pfBody").scrollTop;
+  renderProfile();
+  $("#pfBody").scrollTop = top;
+  $("#pfMsg").textContent = "";
+});
+$("#pfBody").addEventListener("input", e => { if (e.target.dataset.q) draft[e.target.dataset.q] = e.target.value; });
+$("#pfSave").onclick = () => {
+  if (!draft.types.length) { $("#pfMsg").textContent = "צריך לבחור לפחות סוג משרה אחד."; return; }
+  change({ t: "profile", profile: { ...draft, savedAt: new Date().toISOString() } });
+  $("#pfMsg").textContent = configured() ? "✓ נשמר. הרשימה תתעדכן בעדכון הבא (עד שעתיים)." : "✓ נשמר במכשיר הזה. כדי שהרשימה תתעדכן צריך לחבר סנכרון (⚙).";
+  setTimeout(() => { if ($("#profile").open) $("#profile").close(); }, 1600);
+};
+$("#pfReset").onclick = () => { draft = JSON.parse(JSON.stringify(DEFAULT_PROFILE)); renderProfile(); $("#pfMsg").textContent = "הוחזרו ברירות המחדל (עדיין לא נשמר)."; };
+$("#pfClose").onclick = () => $("#profile").close();
+$("#profileBtn").onclick = openProfile;
+$("#openProfile").onclick = () => { $("#settings").close(); openProfile(); };
+document.addEventListener("click", e => { if (e.target.closest("[data-open-profile]")) openProfile(); });
+
+// ---------- settings ----------
+function renderSyncMsg() {
+  const s = settings();
+  const msg = !configured() ? "לא מחובר: השמירות וההסתרות נשמרות רק במכשיר הזה."
+    : { ok: "✓ מחובר ומסונכרן", saving: "שומר…", offline: "אין חיבור. השינויים יישמרו כשיחזור החיבור.",
+        error: "שגיאה בחיבור ל־GitHub: " + syncStatus.detail + (/^401/.test(syncStatus.detail) ? " (המפתח שגוי או פג תוקף)" : /^404/.test(syncStatus.detail) ? " (אין למפתח גישה למאגר)" : "") }[syncStatus.s] || "";
+  $("#syncMsg").textContent = msg;
+  $("#repo").value = s.repo || DEFAULT_REPO;
+}
+
+$("#gear").onclick = () => { renderSyncMsg(); $("#token").value = ""; $("#settings").showModal(); };
+$("#closeSettings").onclick = () => $("#settings").close();
+$("#saveKey").onclick = async () => {
+  const token = $("#token").value.trim() || settings().token;
+  write(K.sync, { repo: ($("#repo").value.trim() || DEFAULT_REPO), token });
+  $("#syncMsg").textContent = "מתחבר…";
+  await sync();
+  $("#token").value = "";
+};
+$("#forget").onclick = () => { localStorage.removeItem(K.sync); setSync("local"); };
+
+let installEvt = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; $("#installRow").hidden = false; });
+$("#install").onclick = async () => { if (!installEvt) return; installEvt.prompt(); installEvt = null; $("#installRow").hidden = true; };
+
+// ---------- events ----------
+document.addEventListener("click", e => {
+  const emp = e.target.closest("[data-employer]");
+  if (emp) {
+    e.stopPropagation();
+    if (!wide() && $("#detail").classList.contains("open")) closeDetail();
+    setEmployer(emp.dataset.employer === employer ? "" : emp.dataset.employer);
+    return;
+  }
+  const b = e.target.closest("[data-act]");
+  if (b) {
+    const act = b.dataset.act;
+    if (act === "unfocus") { history.replaceState(null, "", location.pathname + location.search); render(); return; }
+    if (act === "close") { closeDetail(); return; }
+    const id = b.closest("[data-id]")?.dataset.id; if (!id) return;
+    e.stopPropagation();
+    change({ t: act, id });
+    return;
+  }
+  const c = e.target.closest(".jc");
+  if (c) openJob(c.dataset.id);
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter" && e.target.classList?.contains("jc")) openJob(e.target.dataset.id);
+  if (e.key === "Escape" && $(".dd-panel.open")) { openDD(null); return; }
+  if (e.key === "Escape" && $("#detail").classList.contains("open")) closeDetail();
+});
+window.addEventListener("popstate", () => { $("#detail").classList.remove("open"); });
+// back from the phone's full-screen job: a step back in history when the app added one, else just close
+function closeDetail() { if (history.state && history.state.detail) history.back(); else $("#detail").classList.remove("open"); }
+$("#tabs").addEventListener("click", e => {
+  const t = e.target.closest(".tab"); if (!t) return;
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
+  tab = t.dataset.tab; render();
+});
+$("#internal").onchange = e => change({ t: "prefs", prefs: { includeInternal: e.target.checked } });
+$("#search").oninput = e => { query = e.target.value.trim(); render(); };
+$("#refresh").onclick = () => start(true);
+window.addEventListener("hashchange", () => {
+  render(); window.scrollTo({ top: 0, behavior: "smooth" });
+  if (focusId() && !wide()) $("#detail").classList.add("open");
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && Date.now() - (start.last || 0) > 10 * 60e3) start(false);
+});
+window.addEventListener("online", () => sync());
+matchMedia("(min-width: 900px)").addEventListener("change", () => render());
+
+async function start(manual) {
+  start.last = Date.now();
+  const btn = $("#refresh");
+  btn.disabled = true; btn.classList.add("spin");
+  try {
+    await Promise.all([loadJobs(), sync()]);
+    // "new" = matching jobs this person hasn't seen before; then everything shown counts as seen
+    if (state.seen) data.jobs.forEach(j => { if (!state.seen.includes(j.id)) newIds.add(j.id); });
+    else data.jobs.forEach(j => newIds.add(j.id));
+    write(K.newIds, [...newIds], sessionStorage);
+    const open = data.jobs.map(j => j.id);
+    const unseen = open.filter(id => !(state.seen || []).includes(id));
+    if (unseen.length || !state.seen) change({ t: "seen", ids: unseen, open });
+    render();
+    if (focusId() && !manual && !wide() && data.jobs.some(j => j.id === focusId())) $("#detail").classList.add("open");
+  } catch (e) {
+    $("#list").innerHTML = '<div class="empty">לא הצלחנו לטעון את המשרות. בדקי את החיבור לאינטרנט ולחצי על רענון.</div>';
+  }
+  btn.disabled = false; btn.classList.remove("spin");
+}
+
+// one-time setup link: …/jobs/#key=<github key> saves the key on this device and removes it from the address
+(function takeKeyFromLink() {
+  const m = location.hash.match(/key=([^&]+)/);
+  if (!m) return;
+  write(K.sync, { repo: settings().repo || DEFAULT_REPO, token: decodeURIComponent(m[1]) });
+  history.replaceState(null, "", location.pathname + location.search);
+})();
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+setSync(configured() ? "saving" : "local");
+start(false);
+</script>
+</body>
+</html>
